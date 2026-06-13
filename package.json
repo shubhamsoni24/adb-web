@@ -21,11 +21,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOUR_USERNAME/adb-web.git"
+    "url": "https://github.com/shubhamsoni24/adb-web.git"
   },
-  "homepage": "https://github.com/YOUR_USERNAME/adb-web#readme",
+  "homepage": "https://github.com/shubhamsoni24/adb-web#readme",
   "bugs": {
-    "url": "https://github.com/YOUR_USERNAME/adb-web/issues"
+    "url": "https://github.com/shubhamsoni24/adb-web/issues"
   },
   "engines": {
     "node": ">=16"

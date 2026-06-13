@@ -37,7 +37,7 @@ No Electron. No heavy desktop app. Just Node.js + a browser.
 ### Install & Run
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/adb-web.git
+git clone https://github.com/shubhamsoni24/adb-web.git
 cd adb-web
 npm install
 npm start
