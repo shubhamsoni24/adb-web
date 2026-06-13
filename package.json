@@ -1,0 +1,38 @@
+{
+  "name": "adb-web",
+  "version": "1.0.0",
+  "description": "A beautiful, browser-based ADB APK installer and Android device manager",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "adb",
+    "android",
+    "apk",
+    "apk-installer",
+    "developer-tools",
+    "android-debug-bridge",
+    "nodejs",
+    "web-ui"
+  ],
+  "author": "sonys",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/adb-web.git"
+  },
+  "homepage": "https://github.com/YOUR_USERNAME/adb-web#readme",
+  "bugs": {
+    "url": "https://github.com/YOUR_USERNAME/adb-web/issues"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^2.0.1",
+    "ws": "^8.16.0"
+  }
+}

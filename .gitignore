@@ -1,0 +1,22 @@
+# Dependency directories
+node_modules/
+
+# Uploaded APKs (user data, not for version control)
+uploads/
+
+# Local config (may contain personal ADB paths)
+config.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.user

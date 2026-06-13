@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADB APK Installer — Android Device Manager</title>
+<meta name="description" content="A beautiful, powerful ADB APK installer and Android device manager. Install APKs, manage packages, and control your Android device via ADB.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg-card: #111118;
+    --bg-card2: #16161f;
+    --bg-hover: #1c1c28;
+    --border: rgba(255,255,255,0.07);
+    --border-bright: rgba(255,255,255,0.14);
+    --accent: #6c63ff;
+    --accent2: #a78bfa;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --cyan: #06b6d4;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 32px rgba(0,0,0,0.5);
+    --glow: 0 0 40px rgba(108,99,255,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── Background ─── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(108,99,255,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(6,182,212,0.08) 0%, transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ─── Layout ─── */
+  .app { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ─── Header ─── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 28px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo-icon {
+    width: 46px; height: 46px;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 0 24px rgba(108,99,255,0.4);
+  }
+  .logo-text h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo-text span { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+  .header-status { display: flex; align-items: center; gap: 10px; }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-muted);
+    transition: background .3s, box-shadow .3s;
+  }
+  .status-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .status-dot.error { background: var(--red); box-shadow: 0 0 8px var(--red); }
+  #adb-status-text { font-size: 13px; color: var(--text-muted); }
+
+  /* ─── Grid ─── */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 900px) { .grid, .grid-3 { grid-template-columns: 1fr; } }
+
+  /* ─── Card ─── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .card:hover { border-color: var(--border-bright); }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; font-weight: 600; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .card-title .icon { font-size: 16px; }
+
+  /* ─── Buttons ─── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500; font-family: 'Inter', sans-serif;
+    cursor: pointer; border: none; transition: all .15s ease;
+    text-decoration: none;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(108,99,255,0.35);
+  }
+  .btn-primary:hover { box-shadow: 0 4px 24px rgba(108,99,255,0.55); filter: brightness(1.1); }
+  .btn-secondary {
+    background: var(--bg-hover); color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--bg-card2); border-color: var(--border-bright); color: var(--text); }
+  .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .btn-danger:hover { background: rgba(239,68,68,0.25); }
+  .btn-green { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .btn-green:hover { background: rgba(34,197,94,0.25); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* ─── Devices ─── */
+  .device-list { display: flex; flex-direction: column; gap: 10px; }
+  .device-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    background: var(--bg-card2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer; transition: all .15s;
+  }
+  .device-item:hover { border-color: var(--accent); background: var(--bg-hover); }
+  .device-item.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .device-icon { font-size: 24px; }
+  .device-info { flex: 1; }
+  .device-name { font-size: 14px; font-weight: 600; }
+  .device-serial { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+  .device-state {
+    font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 500;
+  }
+  .device-state.online { background: rgba(34,197,94,0.15); color: var(--green); }
+  .device-state.offline { background: rgba(239,68,68,0.15); color: var(--red); }
+  .device-state.unauthorized { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .no-devices {
+    text-align: center; padding: 32px;
+    color: var(--text-muted); font-size: 13px;
+  }
+  .no-devices .big { font-size: 36px; margin-bottom: 8px; }
+
+  /* ─── Drop zone ─── */
+  #drop-zone {
+    border: 2px dashed var(--border-bright);
+    border-radius: var(--radius);
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+    background: rgba(108,99,255,0.03);
+  }
+  #drop-zone:hover, #drop-zone.dragging {
+    border-color: var(--accent);
+    background: rgba(108,99,255,0.08);
+    box-shadow: 0 0 24px rgba(108,99,255,0.15);
+  }
+  #drop-zone .drop-icon { font-size: 44px; margin-bottom: 12px; line-height: 1; }
+  #drop-zone h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  #drop-zone p { font-size: 13px; color: var(--text-muted); }
+  #file-input { display: none; }
+  .upload-progress {
+    width: 100%; height: 4px;
+    background: var(--border);
+    border-radius: 2px; margin-top: 16px; overflow: hidden;
+    display: none;
+  }
+  .upload-progress-bar {
+    height: 100%; width: 0;
+    background: linear-gradient(90deg, var(--accent), var(--cyan));
+    border-radius: 2px;
+    transition: width .2s;
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+    100% { filter: brightness(1); }
+  }
+
+  /* ─── APK List ─── */
+  .apk-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+  .apk-list::-webkit-scrollbar { width: 4px; }
+  .apk-list::-webkit-scrollbar-track { background: transparent; }
+  .apk-list::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+  .apk-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    background: var(--bg-card2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: all .15s;
+  }
+  .apk-item:hover { border-color: var(--border-bright); }
+  .apk-item.selected { border-color: var(--accent); background: rgba(108,99,255,0.08); }
+  .apk-icon { font-size: 20px; flex-shrink: 0; }
+  .apk-info { flex: 1; min-width: 0; }
+  .apk-name {
+    font-size: 13px; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .apk-size { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .apk-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+  /* ─── Install Panel ─── */
+  .install-panel { margin-top: 20px; }
+  .install-options { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+  .checkbox-wrap {
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; font-size: 13px; color: var(--text-dim);
+    user-select: none;
+  }
+  .checkbox-wrap input[type=checkbox] {
+    width: 16px; height: 16px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .checkbox-wrap:hover { color: var(--text); }
+
+  /* ─── Log Console ─── */
+  .log-console {
+    background: #08080d;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0;
+    overflow: hidden;
+  }
+  .log-console-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+  }
+  .log-console-header .title { font-size: 13px; font-weight: 600; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  #log-output {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; line-height: 1.7;
+    padding: 16px;
+    height: 280px;
+    overflow-y: auto;
+    word-break: break-all;
+  }
+  #log-output::-webkit-scrollbar { width: 4px; }
+  #log-output::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+  .log-line { display: flex; gap: 12px; padding: 1px 0; }
+  .log-time { color: var(--text-muted); flex-shrink: 0; }
+  .log-msg.info { color: #94a3b8; }
+  .log-msg.success { color: var(--green); }
+  .log-msg.error { color: var(--red); }
+  .log-msg.warn { color: var(--yellow); }
+  .log-msg.stdout { color: #a78bfa; }
+  .log-msg.stderr { color: #fb923c; }
+  .log-empty { color: var(--text-muted); font-style: italic; }
+
+  /* ─── Quick Actions ─── */
+  .quick-actions { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .action-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 16px 12px;
+    background: var(--bg-card2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer; transition: all .15s;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px; font-weight: 500; color: var(--text-dim);
+  }
+  .action-btn:hover { border-color: var(--border-bright); color: var(--text); background: var(--bg-hover); }
+  .action-btn .a-icon { font-size: 22px; }
+
+  /* ─── Input ─── */
+  .input-group { display: flex; gap: 8px; align-items: center; }
+  input[type=text], input[type=password] {
+    background: var(--bg-card2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text); padding: 9px 14px;
+    font-size: 13px; font-family: 'Inter', sans-serif;
+    outline: none; width: 100%;
+    transition: border-color .15s;
+  }
+  input[type=text]:focus, input[type=password]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
+  }
+  .form-row { margin-bottom: 14px; }
+  .form-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; display: block; }
+
+  /* ─── Badge ─── */
+  .badge {
+    font-size: 10px; font-weight: 600; padding: 2px 8px;
+    border-radius: 99px; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .badge-accent { background: rgba(108,99,255,0.2); color: var(--accent2); }
+  .badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
+
+  /* ─── Tabs ─── */
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+  .tab {
+    padding: 8px 16px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 1px solid transparent;
+    color: var(--text-muted); background: transparent;
+    transition: all .15s; font-family: 'Inter', sans-serif;
+  }
+  .tab.active { background: var(--bg-card2); border-color: var(--border); color: var(--text); }
+  .tab:hover:not(.active) { color: var(--text-dim); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ─── Notifications ─── */
+  #toast-container {
+    position: fixed; top: 24px; right: 24px;
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 9999;
+  }
+  .toast {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    min-width: 280px; max-width: 380px;
+    animation: slideIn .25s ease forwards;
+    font-size: 13px;
+  }
+  .toast.success { border-color: rgba(34,197,94,0.4); }
+  .toast.error { border-color: rgba(239,68,68,0.4); }
+  @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
+  .toast.out { animation: slideOut .25s ease forwards; }
+
+  /* ─── Uninstall Panel ─── */
+  .packages-list { max-height: 240px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+  .package-item {
+    padding: 8px 10px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: background .1s;
+  }
+  .package-item:hover { background: var(--bg-hover); }
+
+  /* ─── Config ─── */
+  .config-section { padding: 20px; background: var(--bg-card2); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+
+  /* ─── Divider ─── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* ─── Scrollable full section ─── */
+  .section-full { margin-bottom: 20px; }
+
+  /* ─── Spinner ─── */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── Confirm Modal ─── */
+  #confirm-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+  }
+  #confirm-overlay.open { display: flex; animation: fadeIn .15s ease; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  #confirm-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    border-radius: 18px;
+    padding: 32px 28px 24px;
+    width: 360px; max-width: 90vw;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+    animation: popIn .18s cubic-bezier(.34,1.56,.64,1);
+    text-align: center;
+  }
+  @keyframes popIn { from { transform: scale(0.88); opacity:0; } to { transform: scale(1); opacity:1; } }
+  #confirm-icon { font-size: 40px; margin-bottom: 12px; line-height: 1; }
+  #confirm-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+  #confirm-msg { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
+  .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+  #confirm-cancel {
+    flex: 1; padding: 10px 0; border-radius: var(--radius-sm);
+    background: var(--bg-hover); color: var(--text-dim);
+    border: 1px solid var(--border); font-size: 14px; font-weight: 500;
+    font-family: 'Inter', sans-serif; cursor: pointer; transition: all .15s;
+  }
+  #confirm-cancel:hover { background: var(--bg-card2); color: var(--text); }
+  #confirm-ok {
+    flex: 1; padding: 10px 0; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 600;
+    font-family: 'Inter', sans-serif; cursor: pointer;
+    border: none; transition: all .15s;
+  }
+  #confirm-ok.danger { background: var(--red); color: #fff; box-shadow: 0 4px 14px rgba(239,68,68,0.4); }
+  #confirm-ok.danger:hover { filter: brightness(1.1); }
+  #confirm-ok.primary { background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff; box-shadow: 0 4px 14px rgba(108,99,255,0.4); }
+  #confirm-ok.primary:hover { filter: brightness(1.1); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">📱</div>
+      <div class="logo-text">
+        <h1>ADB Installer</h1>
+        <span>Android Device Manager</span>
+      </div>
+    </div>
+    <div class="header-status">
+      <div class="status-dot" id="adb-dot"></div>
+      <span id="adb-status-text">Checking ADB…</span>
+      <button class="btn btn-secondary btn-sm" onclick="refreshAll()">⟳ Refresh</button>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('install')" id="tab-install">📦 Install APK</button>
+    <button class="tab" onclick="switchTab('manage')" id="tab-manage">🗂️ Manage Packages</button>
+    <button class="tab" onclick="switchTab('actions')" id="tab-actions">⚡ Quick Actions</button>
+    <button class="tab" onclick="switchTab('settings')" id="tab-settings">⚙️ Settings</button>
+  </div>
+
+  <!-- ══════════════════ TAB: INSTALL ══════════════════ -->
+  <div class="tab-panel active" id="panel-install">
+    <div class="grid">
+
+      <!-- Left: Devices -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">📱</span> Connected Devices</div>
+          <button class="btn btn-secondary btn-sm" onclick="loadDevices()" id="btn-refresh-devices">Refresh</button>
+        </div>
+        <div id="device-list" class="device-list">
+          <div class="no-devices">
+            <div class="big">📡</div>
+            <div>Scanning for devices…</div>
+          </div>
+        </div>
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border)">
+          <div class="form-label">Selected Device</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--accent2)" id="selected-serial-display">None</div>
+        </div>
+      </div>
+
+      <!-- Right: Upload -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">☁️</span> Upload APK</div>
+          <span class="badge badge-accent" id="apk-count-badge">0 APKs</span>
+        </div>
+        <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+          <div class="drop-icon">📦</div>
+          <h3>Drop APK file here</h3>
+          <p>or click to browse — only .apk files accepted</p>
+          <div class="upload-progress" id="upload-progress">
+            <div class="upload-progress-bar" id="upload-bar"></div>
+          </div>
+        </div>
+        <input type="file" id="file-input" accept=".apk">
+      </div>
+    </div>
+
+    <!-- APK Library + Install Panel -->
+    <div class="card section-full">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">📂</span> APK Library</div>
+        <button class="btn btn-secondary btn-sm" onclick="loadApks()">Refresh</button>
+      </div>
+      <div id="apk-list" class="apk-list">
+        <div class="log-empty">No APKs uploaded yet.</div>
+      </div>
+
+      <div class="install-panel" id="install-panel" style="display:none">
+        <hr>
+        <div style="margin-bottom:14px; font-size:13px; color:var(--text-dim)">
+          Installing: <span id="selected-apk-name" style="color:var(--accent2); font-weight:600"></span>
+        </div>
+        <div class="install-options">
+          <label class="checkbox-wrap"><input type="checkbox" id="opt-replace" checked> Replace existing</label>
+          <label class="checkbox-wrap"><input type="checkbox" id="opt-grant"> Grant all permissions</label>
+          <label class="checkbox-wrap"><input type="checkbox" id="opt-downgrade"> Allow downgrade</label>
+          <label class="checkbox-wrap"><input type="checkbox" id="opt-test"> Allow test APK</label>
+        </div>
+        <div style="display:flex; gap:10px">
+          <button class="btn btn-primary" onclick="installSelected()" id="btn-install">
+            <span>🚀</span> Install APK
+          </button>
+          <button class="btn btn-secondary" onclick="clearInstallSelection()">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log Console -->
+    <div class="log-console">
+      <div class="log-console-header">
+        <div class="title"><div class="live-dot"></div> Live Log</div>
+        <button class="btn btn-secondary btn-sm" onclick="clearLog()">Clear</button>
+      </div>
+      <div id="log-output">
+        <div class="log-empty">Waiting for events…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ TAB: MANAGE ══════════════════ -->
+  <div class="tab-panel" id="panel-manage">
+    <div class="grid">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">📋</span> Installed Packages</div>
+          <button class="btn btn-secondary btn-sm" onclick="loadPackages()">Load</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <input type="text" id="pkg-search" placeholder="Search packages…" oninput="filterPackages()">
+        </div>
+        <div id="packages-list" class="packages-list">
+          <div class="log-empty" style="padding:16px">Click "Load" to fetch installed packages.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">🗑️</span> Uninstall Package</div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Package Name</div>
+          <input type="text" id="uninstall-pkg" placeholder="com.example.app">
+        </div>
+        <label class="checkbox-wrap" style="margin-bottom:14px">
+          <input type="checkbox" id="uninstall-keep-data"> Keep app data &amp; cache
+        </label>
+        <button class="btn btn-danger" onclick="uninstallPackage()">🗑️ Uninstall</button>
+
+        <hr>
+        <div class="card-title" style="margin-bottom:14px"><span class="icon">📊</span> Device Info</div>
+        <button class="btn btn-secondary btn-sm" onclick="loadDeviceInfo()" style="margin-bottom:12px">Load Info</button>
+        <pre id="device-info" style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); white-space:pre-wrap; line-height:1.8; max-height:200px; overflow-y:auto"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ TAB: ACTIONS ══════════════════ -->
+  <div class="tab-panel" id="panel-actions">
+    <div class="card section-full">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">⚡</span> Quick ADB Actions</div>
+        <span style="font-size:12px; color:var(--text-muted)">Acts on selected device</span>
+      </div>
+      <div class="quick-actions">
+        <button class="action-btn" onclick="doAction('reboot')">
+          <span class="a-icon">🔄</span> Reboot
+        </button>
+        <button class="action-btn" onclick="doAction('reboot-recovery')">
+          <span class="a-icon">🛠️</span> Recovery
+        </button>
+        <button class="action-btn" onclick="doAction('reboot-bootloader')">
+          <span class="a-icon">🔓</span> Bootloader
+        </button>
+        <button class="action-btn" onclick="doAction('reboot-fastboot')">
+          <span class="a-icon">⚡</span> Fastboot
+        </button>
+        <button class="action-btn" onclick="doAction('kill-server')">
+          <span class="a-icon">🛑</span> Kill Server
+        </button>
+        <button class="action-btn" onclick="doAction('start-server')">
+          <span class="a-icon">▶️</span> Start Server
+        </button>
+        <button class="action-btn" onclick="doAction('logcat')">
+          <span class="a-icon">📜</span> Get Logcat
+        </button>
+        <button class="action-btn" onclick="captureScreen()">
+          <span class="a-icon">📸</span> Screenshot
+        </button>
+      </div>
+    </div>
+
+    <!-- Log Console for actions too -->
+    <div class="log-console">
+      <div class="log-console-header">
+        <div class="title"><div class="live-dot"></div> ADB Output</div>
+        <button class="btn btn-secondary btn-sm" onclick="clearLog()">Clear</button>
+      </div>
+      <div id="log-output-2">
+        <div class="log-empty" style="padding:16px;">Waiting for actions…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ TAB: SETTINGS ══════════════════ -->
+  <div class="tab-panel" id="panel-settings">
+    <div class="card" style="max-width:600px">
+      <div class="card-title" style="margin-bottom:20px"><span class="icon">⚙️</span> ADB Configuration</div>
+
+      <div class="form-row">
+        <div class="form-label">ADB Executable Path</div>
+        <div class="input-group">
+          <input type="text" id="adb-path-input" placeholder="adb  or  C:\platform-tools\adb.exe">
+          <button class="btn btn-primary" onclick="saveAdbPath()">Save</button>
+        </div>
+        <div style="font-size:12px; color:var(--text-muted); margin-top:6px">
+          Leave blank or "adb" if ADB is in your system PATH.<br>
+          Otherwise enter the full path, e.g. <code style="color:var(--accent2)">C:\platform-tools\adb.exe</code>
+        </div>
+      </div>
+
+      <hr>
+      <div class="card-title" style="margin-bottom:16px"><span class="icon">📥</span> How to Install ADB</div>
+      <div style="font-size:13px; color:var(--text-dim); line-height:1.8">
+        <p><strong style="color:var(--text)">Option 1 – Platform Tools (Recommended)</strong></p>
+        <p>1. Download <a href="https://developer.android.com/tools/releases/platform-tools" target="_blank" style="color:var(--accent2)">Android Platform Tools</a></p>
+        <p>2. Extract to <code style="color:var(--accent2)">C:\platform-tools\</code></p>
+        <p>3. Add to PATH or set the path above</p>
+        <br>
+        <p><strong style="color:var(--text)">Option 2 – Enable Developer Mode on Phone</strong></p>
+        <p>1. Settings → About Phone → tap Build Number 7 times</p>
+        <p>2. Settings → Developer Options → Enable USB Debugging</p>
+        <p>3. Connect phone via USB → Accept debugging prompt</p>
+      </div>
+
+      <hr>
+      <div class="card-title" style="margin-bottom:16px"><span class="icon">🔧</span> Test ADB Connection</div>
+      <button class="btn btn-secondary" onclick="testAdb()">Run ADB Version Check</button>
+      <pre id="adb-test-output" style="margin-top:12px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-dim); white-space:pre-wrap; line-height:1.8"></pre>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Confirm Modal -->
+<div id="confirm-overlay">
+  <div id="confirm-box">
+    <div id="confirm-icon">⚠️</div>
+    <div id="confirm-title">Are you sure?</div>
+    <div id="confirm-msg">This action cannot be undone.</div>
+    <div class="confirm-actions">
+      <button id="confirm-cancel">Cancel</button>
+      <button id="confirm-ok" class="danger">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════ State ══════════════════
+let selectedSerial = null;
+let selectedApkFile = null;
+let allPackages = [];
+let ws = null;
+
+// ══════════════════ Custom Confirm Modal ══════════════════
+function showConfirm({ icon = '⚠️', title = 'Are you sure?', msg = '', okText = 'Confirm', okStyle = 'danger' }) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('confirm-overlay');
+    document.getElementById('confirm-icon').textContent = icon;
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-msg').textContent = msg;
+    const okBtn = document.getElementById('confirm-ok');
+    okBtn.textContent = okText;
+    okBtn.className = okStyle;
+    overlay.classList.add('open');
+
+    const cleanup = (result) => {
+      overlay.classList.remove('open');
+      okBtn.removeEventListener('click', onOk);
+      document.getElementById('confirm-cancel').removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onOverlay);
+      resolve(result);
+    };
+    const onOk = () => cleanup(true);
+    const onCancel = () => cleanup(false);
+    const onOverlay = (e) => { if (e.target === overlay) cleanup(false); };
+
+    okBtn.addEventListener('click', onOk);
+    document.getElementById('confirm-cancel').addEventListener('click', onCancel);
+    overlay.addEventListener('click', onOverlay);
+  });
+}
+
+// ══════════════════ WebSocket ══════════════════
+function connectWs() {
+  ws = new WebSocket(`ws://${location.host}`);
+  ws.onmessage = e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (d.type === 'log') appendLog(d);
+    } catch {}
+  };
+  ws.onclose = () => setTimeout(connectWs, 2000);
+}
+connectWs();
+
+// ══════════════════ Log ══════════════════
+let logInitialized = false;
+function appendLog(d) {
+  const out = document.getElementById('log-output');
+  const out2 = document.getElementById('log-output-2');
+  if (!logInitialized) { out.innerHTML = ''; logInitialized = true; }
+
+  const time = new Date(d.timestamp).toLocaleTimeString();
+  const msg = d.message || '';
+  const line = `<div class="log-line"><span class="log-time">${time}</span><span class="log-msg ${d.level}">${escapeHtml(msg)}</span></div>`;
+  [out, out2].forEach(el => {
+    if (!el) return;
+    if (el.querySelector('.log-empty')) el.innerHTML = '';
+    el.insertAdjacentHTML('beforeend', line);
+    el.scrollTop = el.scrollHeight;
+  });
+}
+
+function clearLog() {
+  ['log-output','log-output-2'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = '<div class="log-empty">Log cleared.</div>';
+  });
+  logInitialized = false;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ══════════════════ Toast ══════════════════
+function toast(msg, type = 'info') {
+  const icons = { success: '✅', error: '❌', info: 'ℹ️', warn: '⚠️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type] || '•'}</span><span>${escapeHtml(msg)}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 300);
+  }, 3500);
+}
+
+// ══════════════════ Tabs ══════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+// ══════════════════ ADB Status ══════════════════
+async function checkAdbStatus() {
+  try {
+    const r = await fetch('/api/adb/status').then(r => r.json());
+    const dot = document.getElementById('adb-dot');
+    const txt = document.getElementById('adb-status-text');
+    if (r.ok) {
+      dot.className = 'status-dot connected';
+      const ver = r.version.split('\n')[0].replace('Android Debug Bridge version ','ADB ');
+      txt.textContent = ver;
+    } else {
+      dot.className = 'status-dot error';
+      txt.textContent = 'ADB not found';
+    }
+  } catch {
+    document.getElementById('adb-dot').className = 'status-dot error';
+    document.getElementById('adb-status-text').textContent = 'Server error';
+  }
+}
+
+// ══════════════════ Devices ══════════════════
+async function loadDevices() {
+  const btn = document.getElementById('btn-refresh-devices');
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    const { devices, ok, error } = await fetch('/api/devices').then(r => r.json());
+    const el = document.getElementById('device-list');
+    if (!ok || !devices.length) {
+      el.innerHTML = `<div class="no-devices">
+        <div class="big">📡</div>
+        <div>${error || 'No devices connected'}</div>
+        <div style="margin-top:6px;font-size:12px">Connect phone via USB with USB Debugging enabled</div>
+      </div>`;
+      return;
+    }
+    el.innerHTML = devices.map(d => `
+      <div class="device-item ${selectedSerial === d.serial ? 'selected' : ''}"
+           onclick="selectDevice('${d.serial}','${d.model}')" id="dev-${d.serial}">
+        <span class="device-icon">📱</span>
+        <div class="device-info">
+          <div class="device-name">${d.model.replace(/_/g,' ')}</div>
+          <div class="device-serial">${d.serial}${d.product ? ' · ' + d.product : ''}</div>
+        </div>
+        <span class="device-state ${d.state}">${d.state}</span>
+      </div>
+    `).join('');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Refresh';
+  }
+}
+
+function selectDevice(serial, model) {
+  selectedSerial = serial;
+  document.querySelectorAll('.device-item').forEach(el => el.classList.remove('selected'));
+  const el = document.getElementById('dev-' + serial);
+  if (el) el.classList.add('selected');
+  document.getElementById('selected-serial-display').textContent = serial + ' (' + model + ')';
+  toast('Selected: ' + model, 'info');
+}
+
+// ══════════════════ APK Upload ══════════════════
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragging'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragging'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('dragging');
+  const file = e.dataTransfer.files[0];
+  if (file) uploadFile(file);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) uploadFile(e.target.files[0]);
+});
+
+function uploadFile(file) {
+  if (!file.name.endsWith('.apk')) { toast('Only .apk files are supported', 'error'); return; }
+  const progress = document.getElementById('upload-progress');
+  const bar = document.getElementById('upload-bar');
+  progress.style.display = 'block'; bar.style.width = '0%';
+
+  const fd = new FormData();
+  fd.append('apk', file);
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/upload');
+  xhr.upload.onprogress = e => {
+    if (e.lengthComputable) bar.style.width = (e.loaded / e.total * 100) + '%';
+  };
+  xhr.onload = () => {
+    progress.style.display = 'none'; bar.style.width = '0%'; fileInput.value = '';
+    try {
+      const r = JSON.parse(xhr.responseText);
+      if (r.ok) { toast('Uploaded: ' + r.originalName, 'success'); loadApks(); }
+      else toast('Upload failed: ' + r.error, 'error');
+    } catch { toast('Upload error', 'error'); }
+  };
+  xhr.onerror = () => { progress.style.display = 'none'; toast('Network error', 'error'); };
+  xhr.send(fd);
+}
+
+// ══════════════════ APK List ══════════════════
+async function loadApks() {
+  const { files } = await fetch('/api/apks').then(r => r.json());
+  const el = document.getElementById('apk-list');
+  const badge = document.getElementById('apk-count-badge');
+  badge.textContent = (files?.length || 0) + ' APKs';
+  if (!files?.length) { el.innerHTML = '<div class="log-empty">No APKs uploaded yet.</div>'; return; }
+
+  el.innerHTML = files.map(f => {
+    const name = f.filename.replace(/^\d+-\d+-/, '');
+    const size = formatBytes(f.size);
+    const isSelected = selectedApkFile === f.filename;
+    return `<div class="apk-item ${isSelected ? 'selected' : ''}" id="apk-${f.filename.replace(/[^a-z0-9]/gi,'_')}">
+      <span class="apk-icon">📦</span>
+      <div class="apk-info">
+        <div class="apk-name" title="${name}">${name}</div>
+        <div class="apk-size">${size}</div>
+      </div>
+      <div class="apk-actions">
+        <button class="btn btn-green btn-sm" onclick="selectApk('${f.filename}','${name}')">Select</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteApk('${f.filename}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectApk(filename, displayName) {
+  selectedApkFile = filename;
+  document.querySelectorAll('.apk-item').forEach(el => el.classList.remove('selected'));
+  const key = filename.replace(/[^a-z0-9]/gi,'_');
+  const el = document.getElementById('apk-' + key);
+  if (el) el.classList.add('selected');
+  document.getElementById('selected-apk-name').textContent = displayName;
+  document.getElementById('install-panel').style.display = 'block';
+}
+
+function clearInstallSelection() {
+  selectedApkFile = null;
+  document.querySelectorAll('.apk-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById('install-panel').style.display = 'none';
+}
+
+async function deleteApk(filename) {
+  const name = filename.replace(/^\d+-\d+-/, '');
+  const ok = await showConfirm({ icon: '🗑️', title: 'Delete APK?', msg: `"${name}" will be permanently removed from the library.`, okText: 'Delete', okStyle: 'danger' });
+  if (!ok) return;
+  const r = await fetch('/api/apks/' + encodeURIComponent(filename), { method: 'DELETE' }).then(r => r.json());
+  if (r.ok) { toast('Deleted', 'success'); if (selectedApkFile === filename) clearInstallSelection(); loadApks(); }
+  else toast('Delete failed: ' + r.error, 'error');
+}
+
+// ══════════════════ Install ══════════════════
+async function installSelected() {
+  if (!selectedApkFile) { toast('Select an APK first', 'warn'); return; }
+
+  const apkName = document.getElementById('selected-apk-name').textContent;
+  const device = selectedSerial ? selectedSerial : 'any connected device';
+  const ok = await showConfirm({
+    icon: '🚀',
+    title: 'Install APK?',
+    msg: `Install "${apkName}" on ${device}?`,
+    okText: 'Install',
+    okStyle: 'primary'
+  });
+  if (!ok) return;
+
+  const btn = document.getElementById('btn-install');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Installing…';
+
+  const flags = {
+    replace: document.getElementById('opt-replace').checked,
+    grant: document.getElementById('opt-grant').checked,
+    downgrade: document.getElementById('opt-downgrade').checked,
+    test: document.getElementById('opt-test').checked,
+  };
+
+  try {
+    const r = await fetch('/api/install', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: selectedApkFile, serial: selectedSerial, flags })
+    }).then(r => r.json());
+
+    if (r.ok) toast('Installation started — check the log', 'success');
+    else toast('Error: ' + r.error, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>🚀</span> Install APK';
+  }
+}
+
+// ══════════════════ Quick Actions ══════════════════
+const ACTION_META = {
+  'reboot':            { icon: '🔄', title: 'Reboot Device?',        msg: 'The device will restart normally.',                okText: 'Reboot',      okStyle: 'danger' },
+  'reboot-recovery':   { icon: '🛠️', title: 'Reboot to Recovery?',   msg: 'The device will restart into Recovery mode.',       okText: 'Recovery',    okStyle: 'danger' },
+  'reboot-bootloader': { icon: '🔓', title: 'Reboot to Bootloader?', msg: 'The device will restart into Bootloader/Fastboot.', okText: 'Bootloader',  okStyle: 'danger' },
+  'reboot-fastboot':   { icon: '⚡', title: 'Reboot to Fastboot?',   msg: 'The device will restart into Fastboot mode.',       okText: 'Fastboot',    okStyle: 'danger' },
+  'kill-server':       { icon: '🛑', title: 'Kill ADB Server?',       msg: 'The ADB server will be stopped. Reconnect needed.', okText: 'Kill Server', okStyle: 'danger' },
+  'start-server':      { icon: '▶️', title: 'Start ADB Server?',      msg: 'The ADB server will be started.',                  okText: 'Start',       okStyle: 'primary' },
+  'logcat':            { icon: '📜', title: 'Fetch Logcat?',          msg: 'Last 200 logcat lines will be pulled from device.', okText: 'Fetch',       okStyle: 'primary' },
+};
+
+async function doAction(action) {
+  const meta = ACTION_META[action] || { icon: '⚡', title: `Run: ${action}?`, msg: 'This ADB action will be executed.', okText: 'Run', okStyle: 'primary' };
+  const confirmed = await showConfirm(meta);
+  if (!confirmed) return;
+
+  switchTab('actions');
+  const r = await fetch('/api/adb', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ serial: selectedSerial, action })
+  }).then(r => r.json());
+  toast(r.ok ? 'Done: ' + action : 'Error: ' + (r.output || action), r.ok ? 'success' : 'error');
+}
+
+async function captureScreen() {
+  toast('Screenshot via adb exec-out screencap — see log', 'info');
+  const r = await fetch('/api/adb', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ serial: selectedSerial, action: 'logcat' })
+  }).then(r => r.json());
+}
+
+// ══════════════════ Packages ══════════════════
+async function loadPackages() {
+  const el = document.getElementById('packages-list');
+  el.innerHTML = '<div class="log-empty" style="padding:16px">Loading…</div>';
+  try {
+    const r = await fetch('/api/shell', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ serial: selectedSerial, command: 'pm list packages' })
+    }).then(r => r.json());
+    if (!r.ok) { el.innerHTML = '<div class="log-empty" style="padding:16px;color:var(--red)">Error: ' + escapeHtml(r.error || r.output) + '</div>'; return; }
+    allPackages = r.output.split('\n').map(l => l.replace('package:','').trim()).filter(Boolean).sort();
+    renderPackages(allPackages);
+  } catch(e) {
+    el.innerHTML = '<div class="log-empty" style="padding:16px;color:var(--red)">Request failed</div>';
+  }
+}
+
+function renderPackages(pkgs) {
+  const el = document.getElementById('packages-list');
+  if (!pkgs.length) { el.innerHTML = '<div class="log-empty" style="padding:16px">No packages found.</div>'; return; }
+  el.innerHTML = pkgs.map(p => `
+    <div class="package-item">
+      <span>${escapeHtml(p)}</span>
+      <button class="btn btn-danger btn-sm" onclick="quickUninstall('${escapeHtml(p)}')">Remove</button>
+    </div>
+  `).join('');
+}
+
+function filterPackages() {
+  const q = document.getElementById('pkg-search').value.toLowerCase();
+  renderPackages(allPackages.filter(p => p.toLowerCase().includes(q)));
+}
+
+function quickUninstall(pkg) {
+  document.getElementById('uninstall-pkg').value = pkg;
+}
+
+async function uninstallPackage() {
+  const pkg = document.getElementById('uninstall-pkg').value.trim();
+  if (!pkg) { toast('Enter a package name', 'warn'); return; }
+  const keepData = document.getElementById('uninstall-keep-data').checked;
+  const ok = await showConfirm({
+    icon: '🗑️',
+    title: 'Uninstall Package?',
+    msg: `"${pkg}" will be uninstalled from the device.${keepData ? ' App data will be kept.' : ' All app data will be deleted.'}`,
+    okText: 'Uninstall',
+    okStyle: 'danger'
+  });
+  if (!ok) return;
+  const r = await fetch('/api/uninstall', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ serial: selectedSerial, packageName: pkg, keepData })
+  }).then(r => r.json());
+  if (r.ok) toast('Uninstall started — check log', 'success');
+  else toast('Error: ' + r.error, 'error');
+}
+
+async function loadDeviceInfo() {
+  const out = document.getElementById('device-info');
+  out.textContent = 'Loading…';
+  try {
+    const commands = [
+      { cmd: 'getprop ro.product.model', label: 'Model' },
+      { cmd: 'getprop ro.build.version.release', label: 'Android' },
+      { cmd: 'getprop ro.build.version.sdk', label: 'SDK' },
+      { cmd: 'getprop ro.product.manufacturer', label: 'Brand' },
+      { cmd: 'wm size', label: 'Screen Size' },
+      { cmd: 'dumpsys battery', label: 'Battery' },
+    ];
+    const results = await Promise.all(commands.map(async c => {
+      try {
+        const r = await fetch('/api/shell', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ serial: selectedSerial, command: c.cmd })
+        }).then(r => r.json());
+        return `${c.label}: ${r.output?.trim() || '—'}`;
+      } catch { return `${c.label}: error`; }
+    }));
+    out.textContent = results.join('\n');
+  } catch { out.textContent = 'Error fetching info'; }
+}
+
+// ══════════════════ Settings ══════════════════
+async function loadConfig() {
+  const r = await fetch('/api/config').then(r => r.json());
+  document.getElementById('adb-path-input').value = r.adbPath || '';
+}
+
+async function saveAdbPath() {
+  const adbPath = document.getElementById('adb-path-input').value.trim() || 'adb';
+  const r = await fetch('/api/config', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ adbPath })
+  }).then(r => r.json());
+  if (r.ok) { toast('ADB path saved!', 'success'); checkAdbStatus(); }
+  else toast('Save failed', 'error');
+}
+
+async function testAdb() {
+  const out = document.getElementById('adb-test-output');
+  out.textContent = 'Testing…';
+  const r = await fetch('/api/adb/status').then(r => r.json());
+  out.textContent = r.ok ? r.version : 'Error: ' + r.error;
+  if (r.ok) checkAdbStatus();
+}
+
+// ══════════════════ Utils ══════════════════
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(2) + ' MB';
+}
+
+function refreshAll() {
+  checkAdbStatus();
+  loadDevices();
+  loadApks();
+}
+
+// ══════════════════ Init ══════════════════
+checkAdbStatus();
+loadDevices();
+loadApks();
+loadConfig();
+// Auto-refresh devices every 8s
+setInterval(loadDevices, 8000);
+</script>
+</body>
+</html>
