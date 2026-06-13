@@ -77,9 +77,9 @@ C:\platform-tools\adb.exe          # Windows
 
 ---
 
-## 🖼️ Screenshots
+## 🖼️ Screenshot
 
-> _Coming soon — contributions welcome!_
+![ADB Web Dashboard](./screenshot.png)
 
 ---
 
