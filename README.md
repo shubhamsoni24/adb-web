@@ -5,6 +5,8 @@
 **A beautiful, browser-based ADB APK installer and Android device manager.**  
 No Electron. No heavy desktop app. Just Node.js + a browser.
 
+[![npm version](https://img.shields.io/npm/v/adb-web.svg)](https://www.npmjs.com/package/adb-web)
+[![npm downloads](https://img.shields.io/npm/dm/adb-web.svg)](https://www.npmjs.com/package/adb-web)
 [![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D16-green)](https://nodejs.org)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -28,13 +30,20 @@ No Electron. No heavy desktop app. Just Node.js + a browser.
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### ⚡ Run instantly with npx (no install needed)
 
-- [Node.js](https://nodejs.org) v16 or higher
-- [Android Platform Tools](https://developer.android.com/tools/releases/platform-tools) (for `adb`)
-- Android phone with **USB Debugging** enabled
+```bash
+npx adb-web
+```
 
-### Install & Run
+### 📦 Install globally
+
+```bash
+npm install -g adb-web
+adb-web
+```
+
+### 🛠️ Clone & run manually
 
 ```bash
 git clone https://github.com/shubhamsoni24/adb-web.git
@@ -44,6 +53,7 @@ npm start
 ```
 
 Then open **http://localhost:3737** in your browser.
+
 
 ---
 
