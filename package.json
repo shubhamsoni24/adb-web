@@ -1,10 +1,10 @@
 {
-  "name": "adb-web",
+  "name": "adb-webui",
   "version": "1.0.0",
   "description": "A beautiful, browser-based ADB APK installer and Android device manager",
   "main": "server.js",
   "bin": {
-    "adb-web": "./bin/adb-web.js"
+    "adb-web": "bin/adb-web.js"
   },
   "scripts": {
     "start": "node server.js",
@@ -25,7 +25,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/shubhamsoni24/adb-web.git"
+    "url": "git+https://github.com/shubhamsoni24/adb-web.git"
   },
   "homepage": "https://github.com/shubhamsoni24/adb-web#readme",
   "bugs": {
