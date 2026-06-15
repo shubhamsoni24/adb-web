@@ -273,7 +273,23 @@ app.post('/api/uninstall', (req, res) => {
 // Serve main HTML
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
-const PORT = process.env.PORT || 3737;
-server.listen(PORT, () => {
-  console.log(`\n🚀 ADB APK Installer running at http://localhost:${PORT}\n`);
-});
+const PREFERRED_PORT = parseInt(process.env.PORT || '3737', 10);
+
+function startServer(port) {
+  server.listen(port, () => {
+    console.log(`\n📱 adb-webui running at http://localhost:${port}`);
+    console.log(`   Press Ctrl+C to stop\n`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`⚠  Port ${port} is in use, trying ${port + 1}...`);
+      server.close();
+      startServer(port + 1);
+    } else {
+      throw err;
+    }
+  });
+}
+
+startServer(PREFERRED_PORT);
