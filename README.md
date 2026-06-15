@@ -1,49 +1,55 @@
 <div align="center">
 
-# 📱 adb-web
+# adb-webui
 
-**A beautiful, browser-based ADB APK installer and Android device manager.**  
-No Electron. No heavy desktop app. Just Node.js + a browser.
+A web-based ADB tool that runs locally in your browser. Install APKs, manage packages, reboot your device — without touching the terminal.
 
-[![npm version](https://img.shields.io/npm/v/adb-web.svg)](https://www.npmjs.com/package/adb-web)
-[![npm downloads](https://img.shields.io/npm/dm/adb-web.svg)](https://www.npmjs.com/package/adb-web)
+[![npm](https://img.shields.io/npm/v/adb-webui.svg)](https://www.npmjs.com/package/adb-webui)
+[![npm downloads](https://img.shields.io/npm/dm/adb-webui.svg)](https://www.npmjs.com/package/adb-webui)
 [![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D16-green)](https://nodejs.org)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D16-brightgreen)](https://nodejs.org)
 
 </div>
 
 ---
 
-## ✨ Features
-
-- 📦 **Drag & drop APK installer** — drop your `.apk` and install in one click
-- 📱 **Auto device detection** — lists all connected ADB devices, auto-refreshes
-- 🔴 **Live log console** — real-time WebSocket output from ADB
-- 🗂️ **Package manager** — list, search, and uninstall installed apps
-- ⚡ **Quick actions** — reboot, recovery, bootloader, logcat, kill/start server
-- ✅ **Confirm prompts** — animated modal before every destructive action
-- ⚙️ **Configurable ADB path** — works even if ADB is not in your system PATH
-- 🌙 **Dark UI** — premium glassmorphism design, fully responsive
+![adb-webui screenshot](./screenshot.png)
 
 ---
 
-## 🚀 Quick Start
+## What it does
 
-### ⚡ Run instantly with npx (no install needed)
+- Drag and drop an APK → click install. Done.
+- Auto-detects connected ADB devices, refreshes every 8 seconds
+- Live log output over WebSocket so you can see exactly what ADB is doing
+- Browse and uninstall installed packages from a list
+- Quick actions: reboot, recovery, bootloader, logcat, kill/start ADB server
+- Confirmation dialog before anything destructive
+- Works even if `adb` isn't in your PATH — just point it to the binary in settings
+
+No Electron. No framework. Just Node.js and a browser tab.
+
+---
+
+## Getting started
+
+### Run without installing
 
 ```bash
-npx adb-web
+npx adb-webui
 ```
 
-### 📦 Install globally
+Opens at `http://localhost:3737` automatically.
+
+### Install globally
 
 ```bash
-npm install -g adb-web
-adb-web
+npm install -g adb-webui
 ```
 
-### 🛠️ Clone & run manually
+Then just run `adb-webui` from anywhere.
+
+### Clone and run
 
 ```bash
 git clone https://github.com/shubhamsoni24/adb-web.git
@@ -52,80 +58,71 @@ npm install
 npm start
 ```
 
-Then open **http://localhost:3737** in your browser.
+---
 
+## Requirements
+
+- Node.js 16+
+- [Android Platform Tools](https://developer.android.com/tools/releases/platform-tools) (`adb`)
+- A phone with USB Debugging enabled
 
 ---
 
-## 📱 Enable USB Debugging on Your Phone
+## Enable USB Debugging
 
-1. **Settings** → **About Phone** → tap **Build Number** 7 times
-2. **Settings** → **Developer Options** → enable **USB Debugging**
-3. Connect phone via USB cable
-4. Accept the **"Allow USB Debugging?"** prompt on your phone
+1. Go to **Settings → About Phone**
+2. Tap **Build Number** 7 times to unlock Developer Options
+3. Go to **Settings → Developer Options** → turn on **USB Debugging**
+4. Plug in your phone and accept the prompt
 
 ---
 
-## ⚙️ Configure ADB Path
+## ADB not found?
 
-If `adb` is not in your system PATH, go to the **⚙️ Settings** tab in the app and set the full path:
+If you get an error about ADB not being found, go to the **Settings** tab inside the app and set the path manually:
 
 ```
-C:\platform-tools\adb.exe          # Windows
-/usr/local/bin/adb                 # macOS/Linux
+C:\platform-tools\adb.exe    # Windows
+/usr/local/bin/adb           # macOS / Linux
 ```
 
 ---
 
-## 🖼️ Screenshot
-
-![ADB Web Dashboard](./screenshot.png)
-
----
-
-## 📁 Project Structure
+## Project structure
 
 ```
 adb-web/
-├── server.js       # Express + WebSocket backend, ADB integration
-├── index.html      # Full frontend (vanilla HTML/CSS/JS)
-├── package.json
-├── .gitignore
-└── LICENSE
+├── server.js       # Express backend, ADB commands, WebSocket
+├── index.html      # Frontend (vanilla JS/CSS, no build step)
+├── bin/adb-webui.js  # CLI entry point for npx
+└── package.json
 ```
 
 ---
 
-## 🔒 Security Notes
+## Security
 
-- ADB shell commands are **whitelisted** — only safe read-only commands are allowed via the UI
-- Uploaded APKs are stored **locally only** on your machine
-- The server binds to `localhost` only by default — not exposed to the network
-
----
-
-## 🤝 Contributing
-
-Contributions, issues and feature requests are welcome!
-
-1. Fork the repo
-2. Create your feature branch: `git checkout -b feature/my-feature`
-3. Commit your changes: `git commit -m 'Add my feature'`
-4. Push to the branch: `git push origin feature/my-feature`
-5. Open a Pull Request
+- Only a small set of ADB shell commands are allowed through the UI
+- APKs are stored locally on your machine, never uploaded anywhere
+- The server only listens on localhost — not accessible from other devices
 
 ---
 
-## 💡 Roadmap
+## Contributing
 
-- [ ] Batch APK installation (multiple files)
-- [ ] Screenshot & screen recording support
-- [ ] File push/pull from device storage
-- [ ] Wireless ADB (connect over Wi-Fi)
-- [ ] Dark/light theme toggle
+PRs are welcome. If you find a bug or want a feature, open an issue first so we can talk about it before you spend time building it.
 
 ---
 
-## 📄 License
+## Roadmap
 
-[MIT](LICENSE) © 2026 sonys
+- [ ] Batch install multiple APKs at once
+- [ ] Wireless ADB connect from the UI
+- [ ] File transfer (push/pull)
+- [ ] Screenshot and screen recording
+
+---
+
+## License
+
+MIT © [shubhamsoni24](https://github.com/shubhamsoni24)
